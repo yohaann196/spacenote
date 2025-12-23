@@ -4,10 +4,21 @@ import tempfile
 
 NOTES_FILE = "notes.json"
 
+MENU_TEXT = """=== Spacenote ===
+1. Add note
+2. List notes
+3. View note
+4. Edit note
+5. Delete note
+6. Exit
+"""
+
 
 def load_notes():
+    """Load notes from disk. Returns a list."""
     if not os.path.exists(NOTES_FILE):
         return []
+
     try:
         with open(NOTES_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -21,6 +32,7 @@ notes = load_notes()
 
 
 def save_notes():
+    """Safely save notes to disk using a temp file."""
     fd, temp_path = tempfile.mkstemp()
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(notes, f, indent=2, ensure_ascii=False)
@@ -28,47 +40,58 @@ def save_notes():
 
 
 def prompt_multiline(prompt):
+    """Prompt user for multi-line input."""
     print(prompt)
     print("(finish with an empty line)")
     lines = []
+
     while True:
         line = input()
         if line == "":
             break
         lines.append(line)
+
     return "\n".join(lines).strip()
 
 
 def list_notes():
+    """Print all note titles."""
     if not notes:
         print("No notes yet.\n")
         return False
-    for i, note in enumerate(notes, 1):
+
+    for i, note in enumerate(notes, start=1):
         print(f"{i}. {note['title']}")
     print()
     return True
 
 
 def get_index(prompt):
+    """Get a valid note index from the user."""
     if not list_notes():
         return None
+
     choice = input(prompt).strip()
     if not choice.isdigit():
         print("Invalid number.\n")
         return None
+
     idx = int(choice) - 1
     if idx < 0 or idx >= len(notes):
         print("Out of range.\n")
         return None
+
     return idx
 
 
 def add_note():
+    """Add a new note."""
     while True:
         title = input("Title: ").strip()
         if title:
             break
         print("Title cannot be empty.")
+
     content = prompt_multiline("Content:")
     notes.append({"title": title, "content": content})
     save_notes()
@@ -79,6 +102,7 @@ def view_note():
     idx = get_index("View note #: ")
     if idx is None:
         return
+
     note = notes[idx]
     print("\n" + "=" * 40)
     print(note["title"])
@@ -91,14 +115,18 @@ def edit_note():
     idx = get_index("Edit note #: ")
     if idx is None:
         return
+
     note = notes[idx]
 
-    new_title = input(f"New title (enter to keep '{note['title']}'): ").strip()
+    new_title = input(
+        f"New title (enter to keep '{note['title']}'): "
+    ).strip()
     if new_title:
         note["title"] = new_title
 
-    print("Edit content")
-    new_content = prompt_multiline("New content (leave empty to keep current):")
+    new_content = prompt_multiline(
+        "New content (leave empty to keep current):"
+    )
     if new_content:
         note["content"] = new_content
 
@@ -110,25 +138,21 @@ def delete_note():
     idx = get_index("Delete note #: ")
     if idx is None:
         return
+
     removed = notes.pop(idx)
     save_notes()
     print(f"Deleted '{removed['title']}'.\n")
 
 
 def menu():
-    print("=== Spacenote ===")
-    print("1. Add note")
-    print("2. List notes")
-    print("3. View note")
-    print("4. Edit note")
-    print("5. Delete note")
-    print("6. Exit")
+    print(MENU_TEXT)
     return input("> ").strip()
 
 
 def main():
     while True:
         choice = menu()
+
         if choice == "1":
             add_note()
         elif choice == "2":
