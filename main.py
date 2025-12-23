@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from datetime import datetime
 
 NOTES_FILE = "notes.json"
 
@@ -55,13 +56,14 @@ def prompt_multiline(prompt):
 
 
 def list_notes():
-    """Print all note titles."""
+    """Print all note titles with creation dates."""
     if not notes:
         print("No notes yet.\n")
         return False
 
     for i, note in enumerate(notes, start=1):
-        print(f"{i}. {note['title']}")
+        date = note.get("created_at", "unknown date")
+        print(f"{i}. {note['title']} ({date})")
     print()
     return True
 
@@ -85,7 +87,7 @@ def get_index(prompt):
 
 
 def add_note():
-    """Add a new note."""
+    """Add a new note with timestamp."""
     while True:
         title = input("Title: ").strip()
         if title:
@@ -93,7 +95,14 @@ def add_note():
         print("Title cannot be empty.")
 
     content = prompt_multiline("Content:")
-    notes.append({"title": title, "content": content})
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    notes.append({
+        "title": title,
+        "content": content,
+        "created_at": timestamp
+    })
+
     save_notes()
     print("Note added.\n")
 
@@ -106,6 +115,7 @@ def view_note():
     note = notes[idx]
     print("\n" + "=" * 40)
     print(note["title"])
+    print(note.get("created_at", ""))
     print("-" * 40)
     print(note["content"] or "(empty)")
     print("=" * 40 + "\n")
